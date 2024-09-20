@@ -1,6 +1,8 @@
 defmodule TinyChatWeb.Router do
   use TinyChatWeb, :router
 
+  import Phoenix.LiveView.Router
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -17,7 +19,7 @@ defmodule TinyChatWeb.Router do
   scope "/", TinyChatWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", Chat.NewChatRoom
   end
 
   # Other scopes may use custom stacks.
