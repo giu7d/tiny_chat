@@ -17,6 +17,14 @@ defmodule TinyChatWeb.Chat.NewChatRoom do
           <.input label="Room Name" field={@form[:title]} />
           <.input label="Room ID" field={@form[:slug]} />
 
+          <%= if length(@errors) !== 0 do %>
+            <div class="rounded-2xl bg-zinc-50 text-zinc-900 p-4">
+              <%= for error <- @errors do %>
+                <p>- <%= error %></p>
+              <% end %>
+            </div>
+          <% end %>
+
           <:actions>
             <.button>Create</.button>
           </:actions>
@@ -32,27 +40,43 @@ defmodule TinyChatWeb.Chat.NewChatRoom do
       |> Room.changeset(params)
       |> to_form()
 
-    {:ok, assign(socket, form: form)}
+    {:ok, socket |> assign(form: form) |> assign(errors: [])}
   end
 
-  def handle_event("validate", %{"room" => room_params}, socket) do
-    form =
-      %Room{}
-      |> Room.changeset(room_params)
-      |> Map.put(:action, :validate)
-      |> to_form()
-
-    {:noreply, assign(socket, form: form)}
+  def handle_event("validate", %{"room" => params}, socket) do
+    {:noreply, assign(socket, form: put_changeset(params))}
   end
 
-  def handle_event("save", %{"room" => room_params}, socket) do
-    case Chat.create_room(room_params) do
+  def handle_event("save", %{"room" => params}, socket) do
+    case Chat.create_room(params) do
       {:ok, _} ->
         # TODO: Redirect to the created room
         {:noreply, redirect(socket, to: ~s"/")}
 
-      {:error, _} ->
-        {:noreply, socket |> put_flash(:error, "Could not save the room.") |> IO.inspect()}
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:form, put_changeset(params))
+         |> assign(:errors, put_errors(reason))}
+    end
+  end
+
+  defp put_changeset(params) do
+    %Room{}
+    |> Room.changeset(params)
+    |> Map.put(:action, :validate)
+    |> to_form()
+  end
+
+  defp put_errors(reason) do
+    case reason do
+      %Ecto.Changeset{} = changeset ->
+        changeset
+        |> Map.get(:errors)
+        |> Enum.map(fn {k, v} -> to_string(k) <> " " <> elem(v, 0) end)
+
+      _ ->
+        ["Could not save the room."]
     end
   end
 end
