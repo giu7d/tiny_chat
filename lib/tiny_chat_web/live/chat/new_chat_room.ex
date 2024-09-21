@@ -50,8 +50,7 @@ defmodule TinyChatWeb.Chat.NewChatRoom do
   def handle_event("save", %{"room" => params}, socket) do
     case Chat.create_room(params) do
       {:ok, _} ->
-        # TODO: Redirect to the created room
-        {:noreply, redirect(socket, to: ~s"/")}
+        {:noreply, redirect(socket, to: ~s"/" <> params["slug"])}
 
       {:error, reason} ->
         {:noreply,

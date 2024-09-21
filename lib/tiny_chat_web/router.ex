@@ -20,6 +20,7 @@ defmodule TinyChatWeb.Router do
     pipe_through :browser
 
     live "/", Chat.NewChatRoom
+    live "/:slug", Chat.ShowChatRoom
   end
 
   # Other scopes may use custom stacks.
